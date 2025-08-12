@@ -315,15 +315,16 @@ function marginMTDvsPrior(divId, numMetric, denMetric, focus, priorK, title){
   Plotly.react(divId, traces, layout, {responsive:true});
 }
 
-// NEW: Dollar-value MoM bars for margins (use numerator totals)
-function marginBarsDollar(divId, numMetric, title){
+function marginBars(divId, numMetric, denMetric, title){
   const f = getFilters(); const filtered = filterRows(ROWS, f);
   const byNum = aggregateByMonth(filtered, numMetric);
-  const y = monthKeys.map(mk => byNum.get(mk)||0);
-  const trace = { x: monthLabels, y: y, type:'bar',
-                  text: y.map(v=> (Math.round(v)).toLocaleString() ), textposition:'outside',
-                  hovertemplate:`%{x} 2025<br>${title}: %{y:,.0f}<extra></extra>` };
-  const layout = { title: `${title} — Month over Month (12-month, $)`, xaxis:{title:'Month (2025)'}, yaxis:{title:`${title} ($)`}, margin:{l:60,r:30,t:60,b:50} };
+  const byDen = aggregateByMonth(filtered, denMetric);
+  const y = monthKeys.map(mk => {
+    const num = byNum.get(mk)||0, den = byDen.get(mk)||0;
+    return den>0 ? num/den : null;
+  });
+  const trace = { x: monthLabels, y: y, type:'bar', text: y.map(v=> v!=null ? (v*100).toFixed(1)+'%' : ''), textposition:'outside', hovertemplate:`%{x} 2025<br>${title}: %{y:.2%}<extra></extra>` };
+  const layout = { title: `${title} — Month over Month (12-month)`, xaxis:{title:'Month (2025)'}, yaxis:{title:title, tickformat:'.0%'}, margin:{l:60,r:30,t:60,b:50} };
   Plotly.react(divId, [trace], layout, {responsive:true});
 }
 
